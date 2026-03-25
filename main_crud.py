@@ -10,46 +10,61 @@ session = Session()
 
 def ruleaza_teste_crud():
 
-    print("\n1. Adaugam Framework-uri si Algoritmi...")
-    fw_openssl = Framework(nume="OpenSSL")
-    fw_pycrypto = Framework(nume="PyCryptodome")
+    print("\n1. Verificam si adaugam Framework-uri si Algoritmi...")
     
-    alg_aes = Algoritm(nume="AES-256", tip=TipAlgoritm.SIMETRIC)
-    alg_rsa = Algoritm(nume="RSA-2048", tip=TipAlgoritm.ASIMETRIC)
+    fw_openssl = session.query(Framework).filter_by(nume="OpenSSL").first()
+    if not fw_openssl:
+        fw_openssl = Framework(nume="OpenSSL")
+        session.add(fw_openssl)
 
-    session.add_all([fw_openssl, fw_pycrypto, alg_aes, alg_rsa])
+    fw_pycrypto = session.query(Framework).filter_by(nume="PyCryptodome").first()
+    if not fw_pycrypto:
+        fw_pycrypto = Framework(nume="PyCryptodome")
+        session.add(fw_pycrypto)
+        
+    alg_aes = session.query(Algoritm).filter_by(nume="AES-256").first()
+    if not alg_aes:
+        alg_aes = Algoritm(nume="AES-256", tip=TipAlgoritm.SIMETRIC)
+        session.add(alg_aes)
+
+    alg_rsa = session.query(Algoritm).filter_by(nume="RSA-2048").first()
+    if not alg_rsa:
+        alg_rsa = Algoritm(nume="RSA-2048", tip=TipAlgoritm.ASIMETRIC)
+        session.add(alg_rsa)
+
     session.commit()
-    print("Date inserate cu succes!")
+    print("Framework-uri si Algoritmi pregatiti!")
 
-    # Adăugăm o cheie de test legată de AES
-    cheie_test = Cheie(valoare_sau_cale="parola_secreta_123", id_algoritm=alg_aes.id)
-    session.add(cheie_test)
-    session.commit()
+    cheie_test = session.query(Cheie).filter_by(valoare_sau_cale="123456789").first()
+    cheie_modificata_anterior = session.query(Cheie).filter_by(valoare_sau_cale="987654321").first()
+    
+    if not cheie_test and not cheie_modificata_anterior:
+        cheie_noua = Cheie(valoare_sau_cale="123456789", id_algoritm=alg_aes.id)
+        session.add(cheie_noua)
+        session.commit()
 
-    # --- READ (Citire date) ---
     print("\n2. Citim din baza de date...")
     algoritmi_db = session.query(Algoritm).all()
     for alg in algoritmi_db:
-        print(f"Găsit algoritm: {alg.nume} (Tip: {alg.tip.value})")
+        print(f"Gasit algoritm: {alg.nume} (Tip: {alg.tip.value})")
 
     chei_db = session.query(Cheie).all()
     for c in chei_db:
-        print(f"Găsit cheie: {c.valoare_sau_cale} folosită pentru {c.algoritm.nume}")
+        print(f"Gasit cheie: {c.valoare_sau_cale} folosita pentru {c.algoritm.nume}")
 
-    # --- UPDATE (Actualizare date) ---
     print("\n3. Actualizam parola cheii...")
     cheie_de_modificat = session.query(Cheie).first()
-    cheie_de_modificat.valoare_sau_cale = "parola_NOUA_456"
-    session.commit()
-    print(f"Parola a fost schimbată în: {cheie_de_modificat.valoare_sau_cale}")
+    if cheie_de_modificat:
+        cheie_de_modificat.valoare_sau_cale = "987654321"
+        session.commit()
+        print(f"Parola a fost schimbata in: {cheie_de_modificat.valoare_sau_cale}")
 
-    # --- DELETE (Ștergere date - curățăm pentru următoarea rulare) ---
-    print("\n4. Ștergem datele de test (pentru a rula scriptul iar data viitoare)...")
+    print("\n4. stergem datele de test...")
     session.query(Cheie).delete()
     session.query(Algoritm).delete()
     session.query(Framework).delete()
     session.commit()
-    print("Datele au fost șterse. Test CRUD finalizat cu succes!")
+    print("Datele au fost sterse.")
 
 if __name__ == "__main__":
     ruleaza_teste_crud()
