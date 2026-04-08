@@ -8,9 +8,8 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-def ruleaza_teste_crud():
-
-    print("\n1. Verificam si adaugam Framework-uri si Algoritmi...")
+def test_create():
+    print("\nVerificam si adaugam Framework-uri, Algoritmi si Chei...")
     
     fw_openssl = session.query(Framework).filter_by(nume="OpenSSL").first()
     if not fw_openssl:
@@ -33,7 +32,6 @@ def ruleaza_teste_crud():
         session.add(alg_rsa)
 
     session.commit()
-    print("Framework-uri si Algoritmi pregatiti!")
 
     cheie_test = session.query(Cheie).filter_by(valoare_sau_cale="123456789").first()
     cheie_modificata_anterior = session.query(Cheie).filter_by(valoare_sau_cale="987654321").first()
@@ -43,28 +41,39 @@ def ruleaza_teste_crud():
         session.add(cheie_noua)
         session.commit()
 
-    print("\n2. Citim din baza de date...")
+def test_read():    
     algoritmi_db = session.query(Algoritm).all()
     for alg in algoritmi_db:
         print(f"Gasit algoritm: {alg.nume} (Tip: {alg.tip.value})")
 
     chei_db = session.query(Cheie).all()
     for c in chei_db:
-        print(f"Gasit cheie: {c.valoare_sau_cale} folosita pentru {c.algoritm.nume}")
+        print(f" Gasit cheie: {c.valoare_sau_cale} folosita pentru {c.algoritm.nume}")
 
-    print("\n3. Actualizam parola cheii...")
+def test_update():
+    
     cheie_de_modificat = session.query(Cheie).first()
     if cheie_de_modificat:
         cheie_de_modificat.valoare_sau_cale = "987654321"
         session.commit()
-        print(f"Parola a fost schimbata in: {cheie_de_modificat.valoare_sau_cale}")
+        print(f"Parola a fost schimbata cu succes in: {cheie_de_modificat.valoare_sau_cale}")
+    else:
+        print(" Nu am gasit nicio cheie de modificat.")
 
-    print("\n4. stergem datele de test...")
+def test_delete():
+    
     session.query(Cheie).delete()
     session.query(Algoritm).delete()
     session.query(Framework).delete()
     session.commit()
-    print("Datele au fost sterse.")
+    print("Datele au fost sterse. Baza de date este curata!")
+
+def ruleaza_teste_crud():
+
+    test_create()
+    test_read()
+    test_update()
+    test_delete()
 
 if __name__ == "__main__":
     ruleaza_teste_crud()
