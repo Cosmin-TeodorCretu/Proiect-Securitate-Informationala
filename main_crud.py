@@ -1,79 +1,91 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from models import Base, Framework, Algoritm, Cheie, TipAlgoritm
+import os
+import time
+from database import CryptoDBManager
+from models import TipAlgoritm, TipOperatie
 
-engine = create_engine('sqlite:///crypto.db', echo=False)
-Base.metadata.create_all(engine)
+def curata_ecran():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
-Session = sessionmaker(bind=engine)
-session = Session()
+def afiseaza_meniu_principal():
+    print("\n   Sistem Management Criptare & Performanta")
+    print("\n1. Administrare (Framework-uri si Algoritmi)")
+    print("2. Management Chei (Adaugare, Vizualizare, Modificare)")
+    print("3. Operatiuni Fisiere (Criptare/Decriptare)")
+    print("4. Rapoarte Performanta")
+    print("0. Iesire")
+    return input("\nSelectati o optiune: ")
 
-def test_create():
-    print("\nVerificam si adaugam Framework-uri, Algoritmi si Chei...")
+def submeniu_administrare(db):
+    curata_ecran()
+    print("   Administrare Sistem\n")
+    print("1. Adauga Framework (ex: OpenSSL, PyCryptodome)")
+    print("2. Adauga Algoritm (ex: AES-256, RSA-2048)")
+    print("3. Inapoi")
+    opt = input("\nOptiune: ")
+
+    if opt == "1":
+        nume = input("\nIntroduceti numele framework-ului: ")
+        db.adauga_framework(nume)
+    elif opt == "2":
+        nume = input("\nIntroduceti numele algoritmului: ")
+        print("\nTip algoritm: 1. Simetric | 2. Asimetric")
+        t = input("Alegere: ")
+        tip = TipAlgoritm.SIMETRIC if t == "1" else TipAlgoritm.ASIMETRIC
+        db.adauga_algoritm(nume, tip)
+
+def submeniu_chei(db):
+    curata_ecran()
+    print("   Management Chei\n")
+    print("1. Adauga Cheie Noua")
+    print("2. Vizualizeaza Toate Cheile")
+    print("3. Actualizeaza Valoare Cheie")
+    print("4. Sterge o Cheie (Delete)")
+    print("5. Inapoi")
+    opt = input("\nOptiune: ")
+
+    if opt == "1":
+        valoare = input("\nIntroduceti valoarea cheii sau calea catre fisierul cheie: ")
+        id_alg = input("ID Algoritm asociat: ")
+        db.adauga_cheie(valoare, int(id_alg))
+    elif opt == "2":
+        chei = db.obtine_toate_cheile()
+        print("\n--- Lista Chei ---")
+        if not chei:
+            print("Nu exista chei in baza de date.")
+        for c in chei:
+            print(f"ID: {c.id} | Cheie: {c.valoare_sau_cale} | Algoritm: {c.algoritm.nume}")
+        input("\nApasa Enter pentru a continua...")
+    elif opt == "3":
+        id_cheie = input("\nIntroduceti ID-ul cheii pe care vreti sa o modificati: ")
+        valoare_noua = input("Introduceti noua valoare: ")
+        db.actualizeaza_cheie(int(id_cheie), valoare_noua)
+    elif opt == "4":
+        id_cheie = input("\nIntroduceti ID-ul cheii pe care vreti sa o stergeti: ")
+        db.sterge_cheie(int(id_cheie))
+
+def main():
+    db = CryptoDBManager()
     
-    fw_openssl = session.query(Framework).filter_by(nume="OpenSSL").first()
-    if not fw_openssl:
-        fw_openssl = Framework(nume="OpenSSL")
-        session.add(fw_openssl)
-
-    fw_pycrypto = session.query(Framework).filter_by(nume="PyCryptodome").first()
-    if not fw_pycrypto:
-        fw_pycrypto = Framework(nume="PyCryptodome")
-        session.add(fw_pycrypto)
+    while True:
+        opt = afiseaza_meniu_principal()
         
-    alg_aes = session.query(Algoritm).filter_by(nume="AES-256").first()
-    if not alg_aes:
-        alg_aes = Algoritm(nume="AES-256", tip=TipAlgoritm.SIMETRIC)
-        session.add(alg_aes)
-
-    alg_rsa = session.query(Algoritm).filter_by(nume="RSA-2048").first()
-    if not alg_rsa:
-        alg_rsa = Algoritm(nume="RSA-2048", tip=TipAlgoritm.ASIMETRIC)
-        session.add(alg_rsa)
-
-    session.commit()
-
-    cheie_test = session.query(Cheie).filter_by(valoare_sau_cale="123456789").first()
-    cheie_modificata_anterior = session.query(Cheie).filter_by(valoare_sau_cale="987654321").first()
-    
-    if not cheie_test and not cheie_modificata_anterior:
-        cheie_noua = Cheie(valoare_sau_cale="123456789", id_algoritm=alg_aes.id)
-        session.add(cheie_noua)
-        session.commit()
-
-def test_read():    
-    algoritmi_db = session.query(Algoritm).all()
-    for alg in algoritmi_db:
-        print(f"Gasit algoritm: {alg.nume} (Tip: {alg.tip.value})")
-
-    chei_db = session.query(Cheie).all()
-    for c in chei_db:
-        print(f" Gasit cheie: {c.valoare_sau_cale} folosita pentru {c.algoritm.nume}")
-
-def test_update():
-    
-    cheie_de_modificat = session.query(Cheie).first()
-    if cheie_de_modificat:
-        cheie_de_modificat.valoare_sau_cale = "987654321"
-        session.commit()
-        print(f"Parola a fost schimbata cu succes in: {cheie_de_modificat.valoare_sau_cale}")
-    else:
-        print(" Nu am gasit nicio cheie de modificat.")
-
-def test_delete():
-    
-    session.query(Cheie).delete()
-    session.query(Algoritm).delete()
-    session.query(Framework).delete()
-    session.commit()
-    print("Datele au fost sterse. Baza de date este curata!")
-
-def ruleaza_teste_crud():
-
-    test_create()
-    test_read()
-    test_update()
-    test_delete()
+        if opt == "1":
+            submeniu_administrare(db)
+        elif opt == "2":
+            submeniu_chei(db)
+        elif opt == "3":
+            print("\n[IN LUCRU]: Aici vor fi apelate functiile de criptare.")
+            input("\nApasa Enter pentru a continua...")
+        elif opt == "4":
+            print("\n[IN LUCRU]: Aici vor fi afisate performantele salvate.")
+            input("\nApasa Enter pentru a continua...")
+        elif opt == "0":
+            print("\nInchidere aplicatie...")
+            break
+        else:
+            print("\nOptiune invalida! Incearca din nou.")
+            time.sleep(1)
+            curata_ecran()
 
 if __name__ == "__main__":
-    ruleaza_teste_crud()
+    main()
