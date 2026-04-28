@@ -63,6 +63,56 @@ def submeniu_chei(db):
         id_cheie = input("\nIntroduceti ID-ul cheii pe care vreti sa o stergeti: ")
         db.sterge_cheie(int(id_cheie))
 
+from crypto_service import OpenSSLService # adauga asta sus langa celelalte importuri
+
+def submeniu_fisiere(db):
+    curata_ecran()
+    print("   Operatiuni Fisiere\n")
+    
+    cale_fisier = input("1. Introduceti calea fisierului de criptat (ex: secret.txt): ")
+    if not os.path.exists(cale_fisier):
+        print("\nEroare: Fisierul nu exista pe disc!")
+        input("\nApasa Enter pentru a continua...")
+        return
+
+    chei = db.obtine_toate_cheile()
+    if not chei:
+        print("\nEroare: Nu aveti nicio cheie in baza de date. Adaugati una intai!")
+        input("\nApasa Enter pentru a continua...")
+        return
+
+    print("\nAlegeti o cheie pentru criptare")
+    for c in chei:
+        print(f"[{c.id}] Cheie: {c.valoare_sau_cale} (Algoritm: {c.algoritm.nume})")
+        
+    id_ales = input("\nIntroduceti ID-ul cheii dorite: ")
+    
+    cheie_aleasa = next((c for c in chei if str(c.id) == id_ales), None)
+    if not cheie_aleasa:
+        print("ID invalid.")
+        return
+
+    cale_iesire = cale_fisier + ".enc"
+    
+    print("\nIncepem criptarea cu OpenSSL...")
+    crypto = OpenSSLService()
+    
+    if "AES" in cheie_aleasa.algoritm.nume:
+        succes, timp_ms, mem_kb = crypto.cripteaza_aes_256(cale_fisier, cale_iesire, cheie_aleasa.valoare_sau_cale)
+        
+        if succes:
+            print(f"\nSucces! Fisier criptat creat: {cale_iesire}")
+            print(f"Timp executie: {timp_ms:.2f} ms | Memorie est: {mem_kb:.2f} KB")
+            
+            fisier_db = db.adauga_fisier(cale_fisier, cale_iesire, cheie_aleasa.id)
+            if fisier_db:
+                db.adauga_performanta(fisier_db.id, 1, TipOperatie.CRIPTARE, timp_ms, mem_kb)
+                print("Datele despre performanta au fost salvate in BD!")
+    else:
+        print(f"\nAlgoritmul {cheie_aleasa.algoritm.nume} nu este implementat inca.")
+        
+    input("\nApasa Enter pentru a continua...")
+
 def main():
     db = CryptoDBManager()
     
@@ -74,8 +124,7 @@ def main():
         elif opt == "2":
             submeniu_chei(db)
         elif opt == "3":
-            print("\n[IN LUCRU]: Aici vor fi apelate functiile de criptare.")
-            input("\nApasa Enter pentru a continua...")
+            submeniu_fisiere(db)
         elif opt == "4":
             print("\n[IN LUCRU]: Aici vor fi afisate performantele salvate.")
             input("\nApasa Enter pentru a continua...")

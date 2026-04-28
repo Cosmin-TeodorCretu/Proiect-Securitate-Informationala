@@ -115,6 +115,36 @@ class CryptoDBManager:
             self.session.rollback()
             print(f"\nEroare DB la stergerea cheii: {e}")
             return False
+    
+    def adauga_fisier(self, nume_original: str, cale_criptat: str, id_cheie: int):
+        from models import Fisier # import local pentru siguranta
+        try:
+            nou_fisier = Fisier(nume_original=nume_original, cale_criptat=cale_criptat, id_cheie=id_cheie)
+            self.session.add(nou_fisier)
+            self.session.commit()
+            return nou_fisier
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            print(f"Eroare DB la adaugarea fisierului: {e}")
+            return None
+
+    def adauga_performanta(self, id_fisier: int, id_framework: int, tip_operatie, timp_ms: float, memorie_kb: float):
+        from models import Performanta
+        try:
+            noua_perf = Performanta(
+                id_fisier=id_fisier, 
+                id_framework=id_framework, 
+                tip_operatie=tip_operatie, 
+                timp_executie_ms=timp_ms, 
+                memorie_kb=memorie_kb
+            )
+            self.session.add(noua_perf)
+            self.session.commit()
+            return True
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            print(f"Eroare DB la salvarea performantei: {e}")
+            return False
 
 if __name__ == "__main__":
     db = CryptoDBManager()
