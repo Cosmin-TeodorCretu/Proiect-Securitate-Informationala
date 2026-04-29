@@ -37,6 +37,7 @@ class Fisier(Base):
     nume_original = Column(String, nullable=False)
     cale_criptat = Column(String, nullable=False)
     id_cheie = Column(Integer, ForeignKey('chei.id'))
+    hash_fisier = Column(String, nullable=True)
     
     cheie = relationship("Cheie")
 

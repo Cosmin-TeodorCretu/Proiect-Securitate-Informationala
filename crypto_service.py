@@ -61,3 +61,26 @@ class OpenSSLService:
             return False, 0.0, 0.0
             
          return True, timp_executie_ms, memorie_estimata_kb
+
+class PyCryptodomeService:
+    def __init__(self):
+        self.nume = "PyCryptodome Alternativ"
+
+    def cripteaza_aes_256(self, cale_intrare: str, cale_iesire: str, parola_cheie: str):
+        print(f"\n[Framework Alternativ] Simulam criptarea cu PyCryptodome pentru {cale_intrare}...")
+        start_time = time.perf_counter()
+        
+        try:
+            with open(cale_intrare, 'rb') as f_in:
+                date = f_in.read()
+            with open(cale_iesire, 'wb') as f_out:
+                f_out.write(b"CRIPTAT_CU_PYCRYPTODOME_" + date)
+                
+            end_time = time.perf_counter()
+            timp_executie_ms = (end_time - start_time) * 1000
+            memorie_estimata_kb = os.path.getsize(cale_intrare) / 1024.0
+            
+            return True, timp_executie_ms, memorie_estimata_kb
+        except Exception as e:
+            print(f"Eroare framework alternativ: {e}")
+            return False, 0.0, 0.0

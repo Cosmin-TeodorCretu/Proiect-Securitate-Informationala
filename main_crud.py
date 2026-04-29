@@ -2,6 +2,7 @@ import os
 import time
 from database import CryptoDBManager
 from models import TipAlgoritm, TipOperatie
+import hashlib
 
 def curata_ecran():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -49,7 +50,7 @@ def submeniu_chei(db):
         db.adauga_cheie(valoare, int(id_alg))
     elif opt == "2":
         chei = db.obtine_toate_cheile()
-        print("\n--- Lista Chei ---")
+        print("\n Lista Chei ")
         if not chei:
             print("Nu exista chei in baza de date.")
         for c in chei:
@@ -104,7 +105,13 @@ def submeniu_fisiere(db):
             print(f"\nSucces! Fisier criptat creat: {cale_iesire}")
             print(f"Timp executie: {timp_ms:.2f} ms | Memorie est: {mem_kb:.2f} KB")
             
-            fisier_db = db.adauga_fisier(cale_fisier, cale_iesire, cheie_aleasa.id)
+            hash_md5 = hashlib.md5()
+            with open(cale_fisier, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_md5.update(chunk)
+            valoare_hash = hash_md5.hexdigest()
+
+            fisier_db = db.adauga_fisier(cale_fisier, cale_iesire, cheie_aleasa.id, valoare_hash)
             if fisier_db:
                 db.adauga_performanta(fisier_db.id, 1, TipOperatie.CRIPTARE, timp_ms, mem_kb)
                 print("Datele despre performanta au fost salvate in BD!")

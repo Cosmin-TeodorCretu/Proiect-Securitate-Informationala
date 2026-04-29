@@ -116,10 +116,10 @@ class CryptoDBManager:
             print(f"\nEroare DB la stergerea cheii: {e}")
             return False
     
-    def adauga_fisier(self, nume_original: str, cale_criptat: str, id_cheie: int):
+    def adauga_fisier(self, nume_original: str, cale_criptat: str, id_cheie: int, hash_fisier: str = ""):
         from models import Fisier # import local pentru siguranta
         try:
-            nou_fisier = Fisier(nume_original=nume_original, cale_criptat=cale_criptat, id_cheie=id_cheie)
+            nou_fisier = Fisier(nume_original=nume_original, cale_criptat=cale_criptat, id_cheie=id_cheie, hash_fisier=hash_fisier)
             self.session.add(nou_fisier)
             self.session.commit()
             return nou_fisier
